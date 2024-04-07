@@ -11,6 +11,7 @@ from __future__ import annotations
 import functools
 import inspect
 import operator
+import re
 import sys
 import types
 from types import BuiltinFunctionType
@@ -26,6 +27,7 @@ import warnings
 from . import extract
 from ._compat import GenericAlias
 from ._compat import UnionType
+from ._compat import formatannotation
 from .doc_ast import type_checking_sections
 
 if TYPE_CHECKING:
@@ -231,3 +233,32 @@ def _eval_type(t, globalns, localns, recursive_guard=frozenset()):
             return t.copy_with(ev_args)
     return t
     # ✂ end ✂
+    # fmt: on
+
+
+class AnnotationReplacer:
+    """A small helper to simplify type annotations."""
+    replacements: dict[str, str]
+    rex: re.Pattern | None = None
+
+    def __init__(self):
+        self.replacements = {}
+
+    def recompile(self) -> None:
+        """
+        Recompile the regular expression used to replace annotations.
+        Needs to be called after modifications to `replacements`.
+        """
+        self.rex = re.compile("|".join(re.escape(k) for k in self.replacements))
+
+    def __call__(self, text: str) -> str:
+        """
+        Shorten an annotation string.
+        """
+        self.recompile()
+        if self.rex:
+            text = self.rex.sub(lambda m: self.replacements[m.group(0)], text)
+        return text
+
+
+simplify_annotation = AnnotationReplacer()

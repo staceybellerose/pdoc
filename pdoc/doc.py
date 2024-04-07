@@ -54,6 +54,7 @@ from pdoc.doc_types import NonUserDefinedCallables
 from pdoc.doc_types import empty
 from pdoc.doc_types import resolve_annotations
 from pdoc.doc_types import safe_eval_type
+from pdoc.doc_types import simplify_annotation
 
 
 def _include_fullname_in_traceback(f):
@@ -466,11 +467,12 @@ class Module(Namespace[types.ModuleType]):
         else:
 
             def include(name: str) -> bool:
+                return True # because of the downside below
                 # optimization: we don't even try to load modules starting with an underscore as they would not be
                 # visible by default. The downside of this is that someone who overrides `is_public` will miss those
                 # entries, the upsides are 1) better performance and 2) less warnings because of import failures
                 # (think of OS-specific modules, e.g. _linux.py failing to import on Windows).
-                return not name.startswith("_")
+                # return not name.startswith("_")
 
         submodules: list[Module] = []
         for mod_name, mod in extract.iter_modules2(self.obj).items():
@@ -1117,9 +1119,9 @@ class Variable(Doc[None]):
         if self.default_value is empty:
             return ""
         if isinstance(self.default_value, TypeAliasType):
-            return formatannotation(self.default_value.__value__)
+            return simplify_annotation(formatannotation(self.default_value.__value__))
         elif self.annotation == TypeAlias:
-            return formatannotation(self.default_value)
+            return simplify_annotation(formatannotation(self.default_value))
 
         # This is not perfect, but a solid attempt at preventing accidental leakage of secrets.
         # If you have input on how to improve the heuristic, please send a pull request!
@@ -1151,7 +1153,7 @@ class Variable(Doc[None]):
     def annotation_str(self) -> str:
         """The variable's type annotation as a pretty-printed str."""
         if self.annotation is not empty:
-            return f": {formatannotation(self.annotation)}"
+            return f": {simplify_annotation(formatannotation(self.annotation))}"
         else:
             return ""
 
@@ -1223,7 +1225,7 @@ class _PrettySignature(inspect.Signature):
 
     def _return_annotation_str(self) -> str:
         if self.return_annotation is not empty:
-            return formatannotation(self.return_annotation)
+            return simplify_annotation(formatannotation(self.return_annotation))
         else:
             return ""
 
@@ -1308,4 +1310,4 @@ def _safe_getdoc(obj: Any) -> str:
 
 def _remove_memory_addresses(x: str) -> str:
     """Remove memory addresses from repr() output"""
-    return re.sub(r" at 0x[0-9a-fA-F]+(?=>)", "", x)
+    return simplify_annotation(re.sub(r" at 0x[0-9a-fA-F]+(?=>)", "", x))

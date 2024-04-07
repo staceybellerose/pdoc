@@ -11,6 +11,11 @@
 
 API Documentation for Python Projects.
 
+# Fork Notes
+
+This fork allows use of modules starting with an underscore. It also allows the
+user to perform annotation substitutions. For an example of how to use this, see
+[sysmon_pytk/apidocs/make.py](https://github.com/staceybellerose/sysmon-pytk/blob/main/apidocs/make.py).
 
 # Example
 
