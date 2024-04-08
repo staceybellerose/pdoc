@@ -267,8 +267,10 @@ See https://pdoc.dev/docs/pdoc/render_helpers.html#DefaultMacroExtension for an 
 {% defaultmacro inherited(cls) %}
     {% for base, members in cls.inherited_members.items() %}
         {% set m = None %}{# workaround for https://github.com/pallets/jinja/issues/1427 #}
+        {% set member_ns = namespace(member_count=0) %}
         {% set member_html %}
             {% for m in members if is_public(m) | trim %}
+                {%- set member_ns.member_count = member_ns.member_count + 1 -%}
                 <dd id="{{ m.qualname }}" class="{{ m.kind }}">
                     {{- m.taken_from | link(text=m.name.replace("__init__",base[1])) -}}
                 </dd>
@@ -277,12 +279,28 @@ See https://pdoc.dev/docs/pdoc/render_helpers.html#DefaultMacroExtension for an 
         {# we may not have any public members, in which case we don't want to print anything. #}
         {% if member_html %}
             <div><dt>{{ base | link }}</dt>
+                {% if member_ns.member_count > 10 -%}
+                    {% set uuid = uuid() | trim %}
+                    <input id="{{ uuid }}" class="view-members-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                    <label class="view-members-button pdoc-button" for="{{ uuid }}"></label>
+                {%- endif -%}
                 {{ member_html }}
             </div>
         {% endif %}
     {% endfor %}
 {% enddefaultmacro %}
 {# fmt: on #}
+{% defaultmacro uuid() %}
+{# Generate a v4 UUID per RFC 4122. The hard-coded "4" indicates a v4 UUID. #}
+{# The digit 'y' requires the most significant bits to be set as "10", per RFC 4122 §4.1.1. #}
+{%- set ns = namespace(uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx') %}
+{%- set ns.new_uuid = '' %}
+{%- for x in ns.uuid %}
+    {%- set ns.new_uuid = [ns.new_uuid,(x | replace('x', [0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'] | random ))] | join %}
+    {%- set ns.new_uuid = [ns.new_uuid,(x | replace('y', [8,9,'a','b'] | random ))] | join %}
+{%- endfor %}
+{{ ns.new_uuid }}
+{% enddefaultmacro %}
 {% defaultmacro view_source_state(doc) %}
     {% if show_source and doc.source %}
         <input id="{{ doc.qualname or "mod-" + doc.name }}-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">

@@ -387,6 +387,33 @@ This makes sure that the pdoc styling doesn't leak to the rest of the page when 
     content: "()";
 }
 
+/* Show/Hide buttons for long default member lists */
+.pdoc .view-members-toggle-state,
+.pdoc .view-members-toggle-state ~ dd {
+    display: none;
+}
+.pdoc .view-members-toggle-state:checked ~ dd {
+    display: inline;
+}
+.pdoc .view-members-button {
+    font-size: .5rem;
+    vertical-align: middle;
+    border-style: dashed;
+    margin-top: -0.1rem;
+}
+.pdoc .view-members-button:hover {
+    background: white;
+}
+.pdoc .view-members-button::before {
+    content: "show";
+    text-align: center;
+    width: 2.2em;
+    display: inline-block;
+}
+.pdoc .view-members-toggle-state:checked ~ .view-members-button::before {
+    content: "hide";
+}
+
 /* Search results */
 .pdoc .search-result .docstring {
     overflow: auto;
