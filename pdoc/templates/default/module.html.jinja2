@@ -185,9 +185,24 @@ See https://pdoc.dev/docs/pdoc/render_helpers.html#DefaultMacroExtension for an 
 {% enddefaultmacro %}
 {% defaultmacro class(cls) -%}
     {{ decorators(cls) }}
+    {%- if is_enum(cls) %}
+    <span class="def">enum</span>
+    {%- else %}
     <span class="def">class</span>
+    {%- endif %}
     <span class="name">{{ cls.qualname }}</span>
     {{- bases(cls) -}}:
+{% enddefaultmacro %}
+{% defaultmacro is_enum(cls) %}
+    {%- set ns = namespace(enum = False)  %}
+    {%- for base, m in cls.inherited_members.items() %}
+        {%- if base == ("enum","Enum") %}
+            {%- set ns.enum = True %}
+        {%- endif %}
+    {%- endfor %}
+    {% if ns.enum %}
+        true
+    {% endif %}
 {% enddefaultmacro %}
 {% defaultmacro member(doc) %}
     {{- view_source_state(doc) -}}
@@ -217,7 +232,11 @@ See https://pdoc.dev/docs/pdoc/render_helpers.html#DefaultMacroExtension for an 
         {% for m in members if is_public(m) | trim %}
             <li>
                 {% if m.kind == "class" %}
+                    {% if is_enum(m) %}
+                    <a class="enum" href="#{{ m.qualname }}">{{ m.qualname }}</a>
+                    {% else %}
                     <a class="class" href="#{{ m.qualname }}">{{ m.qualname }}</a>
+                    {% endif %}
                     {% if m.own_members %}
                         {{ nav_members(m.own_members) | indent(12) }}
                     {% endif %}

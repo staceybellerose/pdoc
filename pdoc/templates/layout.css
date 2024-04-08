@@ -211,6 +211,11 @@ nav.pdoc .class:before {
     color: var(--muted);
 }
 
+nav.pdoc .enum:before {
+    content: "enum ";
+    color: var(--muted);
+}
+
 nav.pdoc .function:after {
     content: "()";
     color: var(--muted);
